@@ -140,7 +140,4 @@ This project is licensed under the **MIT License**.
 ## 👨‍💻 Author
 
 **Your Name**  
-GitHub: [@yourusername](https://github.com/yourusername)
-```
-
-Let me know if you'd like this saved as a file or updated with your name and GitHub profile.
+GitHub: [@Raheesp](https://github.com/Raheesp)

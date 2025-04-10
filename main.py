@@ -18,7 +18,7 @@ def streamlit_ui():
         choice = option_menu('Navigation', ['Home', 'Data Analysis', 'Chat with Mistral', 'EDA', 'AutoML'], default_index=0)
 
     if choice == 'Home':
-        st.title("Welcome to DataQuest")
+        st.title("Welcome to AutoStream")
         st.image("./the stream.gif")
 
     elif choice == 'Data Analysis':

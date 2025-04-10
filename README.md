@@ -153,7 +153,7 @@ streamlit run streamlit_app.py
 
 
 Made with ❤️ using Streamlit, PyCaret, and LLMs.
-```
+
 ## 👨‍💻 Author
 
 **Your Name**  

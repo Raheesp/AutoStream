@@ -1,6 +1,6 @@
-# 📊 DataQuest: Streamlit-Based Data Science Assistant
+# 📊 AutoStream: Streamlit-Based Data Science Assistant
 
-**DataQuest** is an all-in-one interactive data science assistant built using Streamlit. It provides an intuitive interface for:
+**AutoStream** is an all-in-one interactive data science assistant built using Streamlit. It provides an intuitive interface for:
 
 - 📂 Uploading and exploring datasets  
 - 💬 Chatting with your data using an LLM (Mistral via Ollama)  
@@ -111,18 +111,6 @@ Some core packages used:
 - External: `Ollama` for running the Mistral model locally
 
 All dependencies are listed in `requirements.txt`.
-
----
-
-## 📸 Preview
-
-> _(Add screenshots or demo GIF here if available)_
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License**.
 
 ---
 

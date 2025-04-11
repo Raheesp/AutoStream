@@ -42,7 +42,8 @@ def streamlit_ui():
     
         st.markdown("---")
         if st.button("🚀 Jump into Data Analysis"):
-            st.switch_page("Data Analysis")
+            st.session_state["option"] = "Data Analysis"
+
 
 
     elif choice == 'Data Analysis':

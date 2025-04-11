@@ -1,6 +1,5 @@
 # 📊 AutoStream: Streamlit-Based Data Science Assistant
 
-[https://www.canva.com/design/DAGUAISoPk0/_g4NGt_xMjt9r_tP3vkMWg/watch](url)
 # 🚀 AutoStream: Your All-in-One Streamlit-Based Data Science Assistant
 
 **AutoStream** is a no-code/low-code platform built with Streamlit that empowers data professionals to perform end-to-end data analysis, visualization, and AutoML — all in an intuitive web interface.

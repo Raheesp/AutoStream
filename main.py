@@ -18,8 +18,32 @@ def streamlit_ui():
         choice = option_menu('Navigation', ['Home', 'Data Analysis', 'Chat with Mistral', 'EDA', 'AutoML'], default_index=0)
 
     if choice == 'Home':
-        st.title("Welcome to AutoStream")
-        st.image("./the stream.gif")
+    st.markdown("## 👋 Welcome to **AutoStream**")
+    st.image("./the stream.gif", use_column_width=True)
+
+    st.markdown("""
+    AutoStream empowers you to analyze data, run automated machine learning models, and explore insights effortlessly using powerful tools and LLMs (Large Language Models).
+    """)
+
+    st.markdown("### 🚀 Get Started in 3 Steps:")
+    st.markdown("""
+    1. 📁 Upload your dataset in the appropriate section (Data Analysis, EDA, or AutoML).
+    2. 💡 Explore your data with visualizations or chat directly with it using Mistral LLM.
+    3. 🤖 Let AutoML handle the modeling for you — classification or regression!
+    """)
+
+    st.markdown("### 🔍 Key Features:")
+    st.markdown("""
+    - 🧠 **LLM-Powered Data Chat** with Mistral
+    - 📊 **EDA with Sweetviz** for visual summaries
+    - ⚙️ **AutoML** using PyCaret (Classification & Regression)
+    - 📈 **SHAP Explainability** for model insights
+    """)
+
+    st.markdown("---")
+    if st.button("🚀 Jump into Data Analysis"):
+        st.switch_page("Data Analysis")
+
 
     elif choice == 'Data Analysis':
         st.title("Data Analysis Dashboard")

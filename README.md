@@ -19,9 +19,7 @@ Whether you're a beginner, analyst, or data scientist, AutoStream offers powerfu
 5. [✅ Benefits](#-benefits-of-using-autostream)  
 6. [📸 Screenshots](#-screenshots)  
 7. [🔧 Installation](#-installation)  
-8. [🗂️ File Management](#-file-management-in-github)  
  
-
 ---
 
 ## ✨ Features

@@ -15,7 +15,6 @@ DB_FAISS_PATH = "vectorstore/db_faiss"
 def streamlit_ui():
     with st.sidebar:
         st.image("shutterstock_1166533285-Converted-02.png")
-        st.markdown("### 🔧 AutoStream Navigation")
         options = ['Home', 'Data Analysis', 'Chat with Mistral', 'EDA', 'AutoML']
         default_idx = options.index(st.session_state.get("option", "Home")) if "option" in st.session_state else 0
         choice = option_menu('Navigation', options, default_index=default_idx)

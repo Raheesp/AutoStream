@@ -1,6 +1,6 @@
 # 📊 AutoStream: Streamlit-Based Data Science Assistant
 
-![Image](https://github.com/user-attachments/assets/284d2c7a-9137-483a-9482-1bb683a1a0b0)
+![Image](https://github.com/user-attachments/assets/2808e317-9f5d-4a45-80ff-43264ce442a4)
 
 # 🚀 AutoStream: Your All-in-One Streamlit-Based Data Science Assistant
 

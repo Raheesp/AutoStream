@@ -6,14 +6,20 @@ from pandasai import SmartDataframe # SmartDataframe for interacting with data u
 
 
 # Function to chat with CSV data
-def chat_with_csv(df,query):
-     # Initialize LocalLLM with Meta Llama 3 model
+def chat_with_csv(df, query):
+    # Initialize LocalLLM (Mistral via Ollama)
     llm = LocalLLM(
-    api_base="http://localhost:11434/v1",
-    model="mistral")
-    # Initialize SmartDataframe with DataFrame and LLM configuration
-    pandas_ai = SmartDataframe(df, config={"llm": llm})
-    # Chat with the DataFrame using the provided query
+        api_base="http://localhost:11434/v1",
+        model="mistral"
+    )
+
+    # Enhanced SmartDataframe config to enable charts
+    pandas_ai = SmartDataframe(df, config={
+        "llm": llm,
+        "response_type": "plot", "whitelisted_libraries": ["scikit-learn", "sklearn","scipy"],  # Enables auto-plotting
+        "verbose": True  # Optional, for debugging
+    })
+
     result = pandas_ai.chat(query)
     return result
 

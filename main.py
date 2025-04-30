@@ -7,10 +7,203 @@ from pycaret.classification import setup as clf_setup, compare_models as clf_com
 from pycaret.regression import setup as reg_setup, compare_models as reg_compare, pull as reg_pull, save_model as reg_save
 import shap
 import matplotlib.pyplot as plt
+import sklearn
+import scipy
+import re
+from pandas.api.types import is_numeric_dtype, is_datetime64_any_dtype
+
 
 
 st.set_page_config(layout="wide")
 DB_FAISS_PATH = "vectorstore/db_faiss"
+
+
+def loose_column_match(df_columns, keyword):
+    keyword = keyword.lower().replace(" ", "").replace("_", "")
+    for col in df_columns:
+        col_norm = col.lower().replace(" ", "").replace("_", "")
+        if keyword in col_norm:
+            return col
+    return None
+
+# 🤖 Core function
+def chat_with_csv(df, query):
+    llm = LocalLLM(api_base="http://localhost:11434/v1", model="mistral")
+    pandas_ai = SmartDataframe(df, config={
+        "llm": llm,
+        "whitelisted_libraries": ["pandas", "numpy", "matplotlib", "seaborn", "pandasql", "scipy"]
+    })
+
+    query_lower = query.lower()
+    if any(kw in query_lower for kw in ["number of rows", "number of columns", "how many rows", "how many columns", "shape", "size of data"]):
+        num_rows, num_cols = df.shape
+        return {
+            "type": "list",
+            "value": [
+                {"type": "number", "value": num_rows, "label": "Rows"},
+                {"type": "number", "value": num_cols, "label": "Columns"}
+            ]
+        }
+
+    # 🧮 Grouped aggregations (with support for time-based grouping)
+    if " by " in query_lower and any(op in query_lower for op in ["average", "mean", "sum", "count", "max", "min", "median", "std"]):
+        match = re.search(r"(average|mean|sum|count|maximum|max|minimum|min|median|std|standard deviation)\s+(\w+)\s+by\s+(\w+)", query_lower)
+        
+        if match:
+            op, value_col, group_col = match.groups()
+            
+            # Match column names loosely
+            value_match = loose_column_match(df.columns, value_col)
+            group_match = loose_column_match(df.columns, group_col)
+            
+            if value_match and group_match:
+                agg_func = {
+                    "average": "mean", "mean": "mean", "sum": "sum", "count": "count",
+                    "maximum": "max", "max": "max", "minimum": "min", "min": "min",
+                    "median": "median", "std": "std", "standard deviation": "std"
+                }.get(op, "mean")
+
+                # Check if the value column is numeric before applying aggregation
+                if pd.api.types.is_numeric_dtype(df[value_match]):
+                    result_df = df.groupby(group_match)[value_match].agg(agg_func).reset_index()
+                    summary = f"The table below shows the {agg_func} of '{value_match}' grouped by '{group_match}'."
+                    return {"data": result_df, "summary": summary}
+                else:
+                    return f"Cannot apply '{agg_func}' to non-numeric column '{value_match}'."
+            else:
+                return "Couldn't match column names in grouped query."
+        
+        # Attempt to handle date-based grouping
+        group_key = handle_date_grouping(query_lower, df, group_match, value_match)
+        if group_key is None:
+            return f"Column '{group_match}' could not be converted to a valid date format."
+
+        # Apply aggregation
+        agg_func = {
+            "average": "mean", "mean": "mean", "sum": "sum", "count": "count",
+            "maximum": "max", "max": "max", "minimum": "min", "min": "min",
+            "median": "median", "std": "std", "standard deviation": "std"
+        }.get(op, "mean")
+        
+        if not pd.api.types.is_numeric_dtype(df[value_match]):
+            return f"Column '{value_match}' is not numeric and cannot be aggregated."
+
+        result_df = df.groupby(group_key)[value_match].agg(agg_func).reset_index()
+        summary = f"The table below shows the {agg_func} of '{value_match}' grouped by '{group_key}'."
+        return {"data": result_df, "summary": summary}
+
+    # 🔎 Filtered aggregations (e.g., mean of sales where quantity > 100)
+    filter_match = re.search(r"(count|average|mean|sum|median|max|min|std)\s+of\s+(\w+)\s+where\s+(\w+)\s*([<>=!]+)\s*([\d.]+)", query_lower)
+    if filter_match:
+        op, value_col, filter_col, operator, threshold = filter_match.groups()
+        value_match = loose_column_match(df.columns, value_col)
+        filter_match_col = loose_column_match(df.columns, filter_col)
+
+        if value_match and filter_match_col:
+            try:
+                threshold = float(threshold)
+                filtered_df = df.query(f"`{filter_match_col}` {operator} {threshold}")
+                if op == "count":
+                    return filtered_df[value_match].count()
+                elif op in ["average", "mean"]:
+                    return filtered_df[value_match].mean()
+                elif op == "sum":
+                    return filtered_df[value_match].sum()
+                elif op == "median":
+                    return filtered_df[value_match].median()
+                elif op == "max":
+                    return filtered_df[value_match].max()
+                elif op == "min":
+                    return filtered_df[value_match].min()
+                elif op == "std":
+                    return filtered_df[value_match].std()
+            except Exception as e:
+                return f"Error in filtering: {e}"
+        else:
+            return "Couldn't match column names in filtered query."
+
+    # 🔢 Simple column-level aggregation (e.g., mean of sales)
+    if any(keyword in query_lower for keyword in ["average", "mean", "maximum", "minimum", "sum", "total", "count", "median", "std", "standard deviation"]):
+        matched_column = None
+        for col in df.columns:
+            if col.lower().replace(" ", "").replace("_", "") in query_lower.replace(" ", ""):
+                matched_column = col
+                break
+
+        if matched_column:
+            if not is_numeric_dtype(df[matched_column]):
+                return f"Column '{matched_column}' is not numeric and cannot be used in aggregation."
+
+            if "average" in query_lower or "mean" in query_lower:
+                return df[matched_column].mean()
+            elif "maximum" in query_lower or "max" in query_lower:
+                return df[matched_column].max()
+            elif "minimum" in query_lower or "min" in query_lower:
+                return df[matched_column].min()
+            elif "sum" in query_lower or "total" in query_lower:
+                return df[matched_column].sum()
+            elif "count" in query_lower:
+                return df[matched_column].count()
+            elif "median" in query_lower:
+                return df[matched_column].median()
+            elif "std" in query_lower or "standard deviation" in query_lower:
+                return df[matched_column].std()
+            else:
+                return "Sorry, I couldn't determine the correct operation."
+        return "Couldn't match any column in the query. Please check column name spelling."
+
+    # 🧠 Fallback to LLM + PandasAI
+    try:
+        result = pandas_ai.chat(query)
+    except Exception as e:
+        return f"LLM Error: {e}"
+
+    # 📦 Return result appropriately
+    if isinstance(result, dict):
+        if "data" in result and isinstance(result["data"], pd.DataFrame):
+            st.markdown(result.get("summary", ""))
+            st.dataframe(result["data"])
+        elif result.get("type") == "number" and isinstance(result.get("value"), dict):
+            st.metric("Rows", result["value"].get("Rows"))
+            st.metric("Columns", result["value"].get("Columns"))
+        elif result.get("type") == "number":
+            st.metric("Result", result.get("value"))
+        else:
+            st.json(result) # if it's something like {'Rows': ..., 'Columns': ...}
+    elif isinstance(result, (str, int, float)):
+        return result
+    elif isinstance(result, pd.DataFrame):
+        return result
+    elif isinstance(result, dict) and "data" in result:
+        return result
+    elif hasattr(result, "savefig"):
+        return result
+    elif isinstance(result, list):
+        return str(result)
+    else:
+        return f"Unknown result format from LLM: {type(result)} - {result}"
+
+def handle_date_grouping(query_lower, df, group_match, value_match):
+    """ Helper function to extract date parts (month, year, day) if applicable """
+    # Try to convert group column to datetime
+    if not is_datetime64_any_dtype(df[group_match]):
+        try:
+            df[group_match] = pd.to_datetime(df[group_match], errors="coerce")
+        except:
+            return None
+
+    # Extract date parts if applicable
+    if "month" in query_lower:
+        df["__month__"] = df[group_match].dt.month
+        return "__month__"
+    elif "year" in query_lower:
+        df["__year__"] = df[group_match].dt.year
+        return "__year__"
+    elif "day" in query_lower:
+        df["__day__"] = df[group_match].dt.day
+        return "__day__"
+    else:
+        return group_match
 
 def streamlit_ui():
     with st.sidebar:
@@ -22,7 +215,7 @@ def streamlit_ui():
 
     if choice == 'Home':
         st.markdown("## 👋 Welcome to **AutoStream**")
-        st.image("./the stream.gif", use_column_width=True)
+        st.image("./the stream.gif",use_container_width=True)
     
         st.markdown("""
         AutoStream empowers you to analyze data, run automated machine learning models, and explore insights effortlessly using powerful tools and LLMs (Large Language Models).
@@ -47,14 +240,8 @@ def streamlit_ui():
         if st.button("🚀 Jump into Data Analysis"):
             st.session_state["option"] = "Data Analysis"
 
-
-
     elif choice == 'Data Analysis':
-        st.title("Data Analysis Dashboard")
-        def chat_with_csv(df, query):
-            llm = LocalLLM(api_base="http://localhost:11434/v1", model="mistral")
-            pandas_ai = SmartDataframe(df, config={"llm": llm})
-            return pandas_ai.chat(query)
+        st.title("Chat with your Data (Mistral-powered)")
 
         uploaded_files = st.sidebar.file_uploader("Upload CSV files", type=['csv'], accept_multiple_files=True)
 
@@ -66,8 +253,24 @@ def streamlit_ui():
             query = st.text_area("Ask about the data:")
             if st.button("Ask"):
                 result = chat_with_csv(df, query)
-                st.success(result)
 
+                if isinstance(result, dict) and "data" in result:
+                    st.write(result.get("summary", ""))
+                    st.dataframe(result["data"])
+                elif isinstance(result, pd.DataFrame):
+                    st.dataframe(result)
+                elif hasattr(result, "savefig"):
+                    st.pyplot(result)
+                elif isinstance(result, (str, int, float)):
+                    st.write(f"Result: {result}")
+                elif isinstance(result, list):
+                    st.write("Result:")
+                    st.write(result)
+                else:
+                    st.info(f"Unknown response format: {type(result)}")
+                    st.write(result)
+
+        
     elif choice == "EDA":
         st.title("Exploratory Data Analysis")
 

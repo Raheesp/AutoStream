@@ -9,7 +9,6 @@ import shap
 import matplotlib.pyplot as plt
 import sklearn
 import scipy
-import tabulate
 import re
 from pandas.api.types import is_numeric_dtype, is_datetime64_any_dtype
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, accuracy_score

@@ -120,6 +120,7 @@ Extend the platform with your own models, analytics logic, or additional ML libr
 ## 📸 Screenshots
 
 ![Image](https://github.com/user-attachments/assets/1541f6b5-e611-43f2-bf55-121dcad515a0)
+![Image](https://github.com/user-attachments/assets/96d6212b-30a1-4ad3-b201-23c71cb1c262)
 ![Image](https://github.com/user-attachments/assets/869098f8-1832-4f1c-8660-62c4b1c187af)
 ![Image](https://github.com/user-attachments/assets/bfc8f27e-fe39-4955-80b4-fa782a63939e)
 ![Image](https://github.com/user-attachments/assets/292c2666-ea49-47e9-9a24-776c15aec6d8)

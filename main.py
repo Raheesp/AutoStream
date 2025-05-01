@@ -232,7 +232,7 @@ def streamlit_ui():
 
     if choice == 'Home':
         st.markdown("## 👋 Welcome to **AutoStream**")
-        st.image("./the stream.gif",use_container_width=True)
+        st.image("the stream.gif",use_container_width=True)
     
         st.markdown("""
         AutoStream empowers you to analyze data, run automated machine learning models, and explore insights effortlessly using powerful tools and LLMs (Large Language Models).
